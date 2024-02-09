@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/qgis2web.css" />
+    <link rel="stylesheet" href="css/fontawesome-all.min.css" />
+    <link rel="stylesheet" href="css/leaflet-search.css" />
+    <link rel="stylesheet" href="css/filter.css" />
+    <link rel="stylesheet" href="css/nouislider.min.css" />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      .map-title {
+        /*align-content: center;*/
+        margin-left: 50px;
+      }
+      .slider-input {
+        width: 60px;
+      }
+      .legend_Dynamic {
+        background: rgb(231, 228, 228);
+        display: block;
+        position: relative;
+      }
+      .service_providers_icon {
+        height: 20px;
+        width: 20px;
+      }
+      .legend_title {
+        font-weight: bolder;
+      }
+      .directory_Dynamic {
+        background: rgb(231, 228, 228);
+        display: block;
+        position: relative;
+      }
+      .company_text {
+        color: black;
+        align-content: center;
+      }
+      .map-title {
+        /*align-content: center;*/
+        margin-left: 50px;
+      }
+    </style>
+    <title>
+      This map shows the geographical location of hospice and palliative care
+      services in the WHO Eastern Mediterranean region.
+    </title>
+  </head>
+  <body>
+    <div id="map"></div>
+    <!-- jQuery -->
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <!-- others -->
+    <script src="js/qgis2web_expressions.js"></script>
+    <script src="js/leaflet.js"></script>
+    <script src="js/leaflet.rotatedMarker.js"></script>
+    <script src="js/leaflet.pattern.js"></script>
+    <script src="js/leaflet-hash.js"></script>
+    <script src="js/Autolinker.min.js"></script>
+    <script src="js/rbush.min.js"></script>
+    <script src="js/labelgun.min.js"></script>
+    <script src="js/labels.js"></script>
+    <script src="js/leaflet-search.js"></script>
+    <script src="js/tailDT.js"></script>
+    <script src="js/nouislider.min.js"></script>
+    <script src="js/wNumb.js"></script>
+    <script src="data/Numberofserviceproviderspercountry_1.js"></script>
+    <script src="data/Serviceproviders_2.js"></script>
+    <script>
+      /************lang translation starts***************/
+      var lang = sessionStorage.getItem("lang");
+      var selected1 = "";
+      var selected2 = "";
+      if (lang == "Arabic") {
+        document.documentElement.dir = "rtl";
+        //document.documentElement.lang = "ar";
+
+        var title_translated =
+          '<span style="text-align:right">تقوم هذه الخريطة بإظهار المواقع الجغرافية التي تحتوي على خدمات رعاية هوزبس وخدمات الرعاية التلطيفية في إقليم الشرق الأوسط لمنظمة الصحة العالمية WHO EMR.</span>';
+        var abstract_translated =
+          '<span style="text-align:end">تمت المشاركة الطوعية بالمعلومات الواردة في هذا الدليل عبر مسح أجرته المنظمة الأفريقية للرعاية التلطيفية (APCA). الإدراج في هذا الدليل لا يمثل أي تأييد او دعم من المنظمة الأفريقية للرعاية التلطيفية (APCA) او منظمة الصحة العالمية (WHO). المنظمة الأفريقية للرعاية التلطيفية غير مسئولة عن صحة ومصداقية المعلومات الواردة إذ أنه تم الإدلاء بها من قبل طرف ثالث. هذا الدليل مقصورعلى المعاهد، الدور(هوزبس) والمنظمات التي توفر خدمات الرعاية التلطيفية ورعاية هوزبس (الرعاية في نهاية الحياة). يتم وضع علامة مميزة على كل قائمة – في المواقع التي بها أكثر من قائمة، يتم عرض رقم يضم كل القوائم. يمكنك تحريك الخريطة أو تكبيرها بإستخدام أداة التكبير الموجودة على اليسار. سيؤدي النقر على النقطة إلى فتح مربع نص يحتوي على معلومات الإتصال. إذا أردت أن نقوم بإضافة خدماتك الرجاء مراسلتنا على عنوان البريد الإلكتروني: info@africanpalliativecare.org  </span>';
+        selected1 = "selected";
+        var guide_translated =
+          '<p class="legend_title">مرشد</p><p>حدد أيقونة الطبقات لتنشيط أو إلغاء تنشيط طبقة من اختيارك. قم بتنشيط "مقدمي الخدمة" و"Google Satellite" إذا كنت ترغب في عرض مزود خدمة معين وجيرانه. قم بتفعيل "عدد مقدمي الخدمة لكل دولة" وخريطة جوجل" إذا كنت ترغب في عرض الدول التي بها أكبر عدد من مقدمي الخدمة. انقر على القائمة المنسدلة للتبديل إلى خريطة أخرى تتضمن الخريطة الحرارية والنسخة العربية.</p>';
+        var service_providers_translated = "مقدمي الخدمة";
+        var countries_categorized_translated =
+          "تصنيف الدول حسب عدد مقدمي الخدمة";
+        var year_started_translated = "السنة التي بدأت";
+        var patients_served_translated = "المرضى خدموا";
+        var clear_filter_translated = "مرشح واضح";
+        var name_of_facility_translated = "اسم المنشأة";
+        var country_translated = "البلد";
+        var city_translated = "المدينة";
+        var whatsapp_number_translated = "رقم واتس اب";
+        var type_of_facility_translated = "نوع المنشأة";
+        var total_patients_served_since_initiation_translated =
+          "إجمالي المرضى الذين خدموا منذ البداية";
+        var total_number_of_staff_translated = "إجمالي عدد الموظفين";
+        var category_translated = "الفئة";
+        var facility_dispenses_opioids_translated =
+          "تقوم المنشأة بتوزيع المواد الأفيونية";
+        var palliative_care_in_humaniterian_settings_translated =
+          "الرعاية التلطيفية في الأوضاع الإنسانية؟";
+        var facility_serves_children_translated = "المنشأة تخدم الأطفال؟";
+        var website_translated = "موقع إلكتروني";
+        var developed_by_translated = "طورت بواسطة";
+        var other_regions_translated = "مناطق أخرى";
+        var no_data_translated = "لا توجد بيانات";
+        var greater_than_20_translated = "أكثر من 20";
+      } else {
+        title_translated =
+          "This map shows the geographical location of hospice and palliative care services in the WHO Eastern Mediterranean region.";
+        abstract_translated =
+          "The information contained in this directory was voluntarily sent to APCA via a survey. Listing in this directory does not represent endorsement or support from APCA or WHO. APCA is not responsible for the accuracy and veracity of the information as it was provided by third parties. This directory is limited to institutions, hospices, and organizations that provide palliative and hospice care. Each listing is marked - in locations where more than one listing is available, a number with the total listings is displayed. You can drag or zoom in the map by using the zooming tool on the left. Clicking on the dot will open a text box with the contact information. If you would like us to add your service please email – info@africanpalliativecare.org ";
+        selected2 = "selected";
+        var guide_translated =
+          '<p class="legend_title">GUIDE</p><p>Select the layers icon to activate or deactivate a layer of your choice. Activate the “Service providers” and “Google satellite” if you would like to view a particular service provider and its neighborhood. Activate the “Number of service providers per country” and Google map” if you wish to view the countries with the highest number of service providers. Click in the drop down to switch to another map including the Heat map and the Arabic version.</p>';
+        var service_providers_translated = "Service Providers";
+        var countries_categorized_translated =
+          "Countries categorized according to number of service providers";
+        var year_started_translated = "Year Started";
+        var patients_served_translated = "Patients Served";
+        var clear_filter_translated = "clear filter";
+        var name_of_facility_translated = "Name of facility";
+        var country_translated = "Country";
+        var city_translated = "City";
+        var whatsapp_number_translated = "Whatsapp number";
+        var type_of_facility_translated = "Type of facility";
+        var total_patients_served_since_initiation_translated =
+          "Total patients served since initiation";
+        var total_number_of_staff_translated = "Total number of staff";
+        var category_translated = "Category";
+        var facility_dispenses_opioids_translated =
+          "Facility dispenses opioids";
+        var palliative_care_in_humaniterian_settings_translated =
+          "Palliative care in humanterian settings?";
+        var facility_serves_children_translated = "Facility serves children?";
+        var website_translated = "Website";
+        var developed_by_translated = "Developed by";
+        var other_regions_translated = "Other regions";
+        var no_data_translated = "No data";
+        var greater_than_20_translated = "Greater than 20";
+      }
+      /*************lang tarnslation ends*************************************/
+      var highlightLayer;
+      function highlightFeature(e) {
+        highlightLayer = e.target;
+
+        if (e.target.feature.geometry.type === "LineString") {
+          highlightLayer.setStyle({
+            color: "#ffff00",
+          });
+        } else {
+          highlightLayer.setStyle({
+            fillColor: "#ffff00",
+            fillOpacity: 1,
+          });
+        }
+      }
+      var map = L.map("map", {
+        zoomControl: true,
+        maxZoom: 20,
+        minZoom: 3,
+      }).fitBounds([
+        [-5.346031778753542, -20.92395234787535],
+        [43.403634839943344, 70.93707425212466],
+      ]);
+      var hash = new L.Hash(map);
+      map.attributionControl.setPrefix(
+        '<span class="company_text"><span style = "font-weight:bolder">' +
+          developed_by_translated +
+          ': <span style = "font-weight:bolder;color:blue">MRT IT PEAKS LIMITED (UG)</span></span> </span> <a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>'
+      );
+      var autolinker = new Autolinker({
+        truncate: { length: 30, location: "smart" },
+      });
+      var bounds_group = new L.featureGroup([]);
+      function setBounds() {}
+      map.createPane("pane_GoogleSatelliteHybrid_0");
+      map.getPane("pane_GoogleSatelliteHybrid_0").style.zIndex = 400;
+      var layer_GoogleSatelliteHybrid_0 = L.tileLayer(
+        "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        {
+          pane: "pane_GoogleSatelliteHybrid_0",
+          opacity: 1.0,
+          attribution: "",
+          minZoom: 3,
+          maxZoom: 20,
+        }
+      );
+      layer_GoogleSatelliteHybrid_0;
+      function pop_Numberofserviceproviderspercountry_1(feature, layer) {
+        layer.on({
+          mouseout: function (e) {
+            for (i in e.target._eventParents) {
+              e.target._eventParents[i].resetStyle(e.target);
+            }
+          },
+          mouseover: highlightFeature,
+        });
+        var popupContent =
+          '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>Country</strong><br />' +
+          (feature.properties["Country"] !== null
+            ? autolinker.link(feature.properties["Country"].toLocaleString())
+            : "") +
+          "</td>\
+                    </tr>\
+                </table>";
+        layer.bindPopup(popupContent, { maxHeight: 250 });
+      }
+
+      function style_Numberofserviceproviderspercountry_1_0(feature) {
+        if (
+          feature.properties["q2wHide_Service pr"] >= 0.0 &&
+          feature.properties["q2wHide_Service pr"] <= 0.0
+        ) {
+          return {
+            pane: "pane_Numberofserviceproviderspercountry_1",
+            opacity: 1,
+            color: "rgba(35,35,35,1.0)",
+            dashArray: "",
+            lineCap: "butt",
+            lineJoin: "miter",
+            weight: 1.0,
+            fill: true,
+            fillOpacity: 1,
+            fillColor: "rgba(252,247,199,1.0)",
+            interactive: true,
+          };
+        }
+        if (
+          feature.properties["q2wHide_Service pr"] >= 0.0 &&
+          feature.properties["q2wHide_Service pr"] <= 1.0
+        ) {
+          return {
+            pane: "pane_Numberofserviceproviderspercountry_1",
+            opacity: 1,
+            color: "rgba(35,35,35,1.0)",
+            dashArray: "",
+            lineCap: "butt",
+            lineJoin: "miter",
+            weight: 1.0,
+            fill: true,
+            fillOpacity: 1,
+            fillColor: "rgba(196,237,254,1.0)",
+            interactive: true,
+          };
+        }
+        if (
+          feature.properties["q2wHide_Service pr"] >= 1.0 &&
+          feature.properties["q2wHide_Service pr"] <= 10.0
+        ) {
+          return {
+            pane: "pane_Numberofserviceproviderspercountry_1",
+            opacity: 1,
+            color: "rgba(35,35,35,1.0)",
+            dashArray: "",
+            lineCap: "butt",
+            lineJoin: "miter",
+            weight: 1.0,
+            fill: true,
+            fillOpacity: 1,
+            fillColor: "rgba(11,59,121,1.0)",
+            interactive: true,
+          };
+        }
+        if (
+          feature.properties["q2wHide_Service pr"] >= 10.0 &&
+          feature.properties["q2wHide_Service pr"] <= 19.0
+        ) {
+          return {
+            pane: "pane_Numberofserviceproviderspercountry_1",
+            opacity: 1,
+            color: "rgba(35,35,35,1.0)",
+            dashArray: "",
+            lineCap: "butt",
+            lineJoin: "miter",
+            weight: 1.0,
+            fill: true,
+            fillOpacity: 1,
+            fillColor: "rgba(26,10,240,1.0)",
+            interactive: true,
+          };
+        }
+        if (
+          feature.properties["q2wHide_Service pr"] >= 19.0 &&
+          feature.properties["q2wHide_Service pr"] <= 24.0
+        ) {
+          return {
+            pane: "pane_Numberofserviceproviderspercountry_1",
+            opacity: 1,
+            color: "rgba(35,35,35,1.0)",
+            dashArray: "",
+            lineCap: "butt",
+            lineJoin: "miter",
+            weight: 1.0,
+            fill: true,
+            fillOpacity: 1,
+            fillColor: "rgba(14,178,248,1.0)",
+            interactive: true,
+          };
+        }
+      }
+      map.createPane("pane_Numberofserviceproviderspercountry_1");
+      map.getPane(
+        "pane_Numberofserviceproviderspercountry_1"
+      ).style.zIndex = 401;
+      map.getPane("pane_Numberofserviceproviderspercountry_1").style[
+        "mix-blend-mode"
+      ] = "normal";
+      var layer_Numberofserviceproviderspercountry_1 = new L.geoJson(
+        json_Numberofserviceproviderspercountry_1,
+        {
+          attribution: "",
+          interactive: true,
+          dataVar: "json_Numberofserviceproviderspercountry_1",
+          layerName: "layer_Numberofserviceproviderspercountry_1",
+          pane: "pane_Numberofserviceproviderspercountry_1",
+          onEachFeature: pop_Numberofserviceproviderspercountry_1,
+          style: style_Numberofserviceproviderspercountry_1_0,
+        }
+      );
+      bounds_group.addLayer(layer_Numberofserviceproviderspercountry_1);
+      map.addLayer(layer_Numberofserviceproviderspercountry_1);
+      function pop_Serviceproviders_2(feature, layer) {
+        layer.on({
+          mouseout: function (e) {
+            for (i in e.target._eventParents) {
+              e.target._eventParents[i].resetStyle(e.target);
+            }
+          },
+          mouseover: highlightFeature,
+        });
+        var popupContent =
+          '<table>\
+                          <tr>\
+                              <th scope="row">' +
+          name_of_facility_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Name of facility"] !== null
+            ? autolinker.link(
+                feature.properties["Name of facility"].toLocaleString()
+              )
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          whatsapp_number_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Whatsapp number"] !== null
+            ? autolinker.link(
+                feature.properties["Whatsapp number"].toLocaleString()
+              )
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          city_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["City"] !== null
+            ? autolinker.link(feature.properties["City"].toLocaleString())
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          year_started_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Year started"] !== null
+            ? autolinker.link(feature.properties["Year started"].toString())
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          type_of_facility_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Type of facility"] !== null
+            ? autolinker.link(
+                feature.properties["Type of facility"].toLocaleString()
+              )
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          total_patients_served_since_initiation_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Total patients served since initiation"] !== null
+            ? autolinker.link(
+                feature.properties[
+                  "Total patients served since initiation"
+                ].toLocaleString()
+              )
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          total_number_of_staff_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Total number of staff"] !== null
+            ? autolinker.link(
+                feature.properties["Total number of staff"].toLocaleString()
+              )
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          category_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Category"] !== null
+            ? autolinker.link(feature.properties["Category"].toLocaleString())
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          facility_dispenses_opioids_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Does this facility dispense opioids?"] !== null
+            ? autolinker.link(
+                feature.properties[
+                  "Does this facility dispense opioids?"
+                ].toLocaleString()
+              )
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          palliative_care_in_humaniterian_settings_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties[
+            "Does the facility provide palliative care in humanitarian setting?"
+          ] !== null
+            ? autolinker.link(
+                feature.properties[
+                  "Does the facility provide palliative care in humanitarian setting?"
+                ].toLocaleString()
+              )
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          facility_serves_children_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Does the facility serve children?"] !== null
+            ? autolinker.link(
+                feature.properties[
+                  "Does the facility serve children?"
+                ].toLocaleString()
+              )
+            : "") +
+          '</td>\
+                          </tr>\
+                          <tr>\
+                              <th scope="row">' +
+          website_translated +
+          "</th>\
+                              <td>" +
+          (feature.properties["Website"] !== null
+            ? autolinker.link(feature.properties["Website"].toLocaleString())
+            : "") +
+          "</td>\
+                          </tr>\
+                      </table>";
+
+        layer.bindPopup(popupContent, { maxHeight: 250 });
+      }
+
+      function style_Serviceproviders_2_0() {
+        return {
+          pane: "pane_Serviceproviders_2",
+          rotationAngle: 0.0,
+          rotationOrigin: "center center",
+          icon: L.icon({
+            iconUrl: "markers/Hospital icon.svg",
+            iconSize: [30.4, 30.4],
+          }),
+          interactive: true,
+        };
+      }
+      map.createPane("pane_Serviceproviders_2");
+      map.getPane("pane_Serviceproviders_2").style.zIndex = 402;
+      map.getPane("pane_Serviceproviders_2").style["mix-blend-mode"] = "normal";
+      var layer_Serviceproviders_2 = new L.geoJson(json_Serviceproviders_2, {
+        attribution: "",
+        interactive: true,
+        dataVar: "json_Serviceproviders_2",
+        layerName: "layer_Serviceproviders_2",
+        pane: "pane_Serviceproviders_2",
+        onEachFeature: pop_Serviceproviders_2,
+        pointToLayer: function (feature, latlng) {
+          var context = {
+            feature: feature,
+            variables: {},
+          };
+          return L.marker(latlng, style_Serviceproviders_2_0(feature));
+        },
+      });
+      bounds_group.addLayer(layer_Serviceproviders_2);
+      map.addLayer(layer_Serviceproviders_2);
+      var title = new L.Control();
+      title.onAdd = function (map) {
+        this._div = L.DomUtil.create("div", "info map-title");
+        this.update();
+        return this._div;
+      };
+      title.update = function () {
+        this._div.innerHTML = "<h2>" + title_translated + "</h2>";
+      };
+      title.addTo(map);
+      var abstract = new L.Control({ position: "topright" });
+      abstract.onAdd = function (map) {
+        this._div = L.DomUtil.create("div", "leaflet-control abstract");
+        this._div.id = "abstract";
+        this._div.setAttribute("onmouseenter", "abstract.show()");
+        this._div.setAttribute("onmouseleave", "abstract.hide()");
+        this.hide();
+        return this._div;
+      };
+      abstract.hide = function () {
+        this._div.classList.remove("abstractUncollapsed");
+        this._div.classList.add("abstract");
+        this._div.innerHTML = "i";
+      };
+      abstract.show = function () {
+        this._div.classList.remove("abstract");
+        this._div.classList.add("abstractUncollapsed");
+        this._div.innerHTML = abstract_translated;
+      };
+      abstract.addTo(map);
+      /*********************guide starts***********************/
+      var guide = new L.Control({ position: "topleft" });
+      guide.onAdd = function (map) {
+        this._div = L.DomUtil.create("div", "leaflet-control guide");
+        this._div.id = "guide";
+        this._div.setAttribute("onmouseenter", "guide.show()");
+        this._div.setAttribute("onmouseleave", "guide.hide()");
+        this.hide();
+        return this._div;
+      };
+      guide.hide = function () {
+        this._div.classList.remove("abstractUncollapsed");
+        this._div.classList.add("abstract");
+        this._div.innerHTML = "g";
+      };
+      guide.show = function () {
+        this._div.classList.remove("abstract");
+        this._div.classList.add("abstractUncollapsed");
+        this._div.innerHTML = guide_translated;
+      };
+      guide.addTo(map);
+      /*********************guide ends***********************/
+      var baseMaps = {};
+      L.control
+        .layers(baseMaps, {
+          "Service providers": layer_Serviceproviders_2,
+          "Number of service providers per country<br />":
+            layer_Numberofserviceproviderspercountry_1,
+          "Google Satellite Hybrid": layer_GoogleSatelliteHybrid_0,
+        })
+        .addTo(map);
+      setBounds();
+      map.addControl(
+        new L.Control.Search({
+          layer: layer_Serviceproviders_2,
+          initial: false,
+          hideMarkerOnCollapse: true,
+          propertyName: "Name of facility",
+        })
+      );
+      document.getElementsByClassName("search-button")[0].className +=
+        " fa fa-binoculars";
+      var mapDiv = document.getElementById("map");
+      var row = document.createElement("div");
+      row.className = "row";
+      row.id = "all";
+      row.style.height = "100%";
+      var col1 = document.createElement("div");
+      col1.className = "col9";
+      col1.id = "mapWindow";
+      col1.style.height = "99%";
+      col1.style.width = "80%";
+      col1.style.display = "inline-block";
+      var col2 = document.createElement("div");
+      col2.className = "col3";
+      col2.id = "menu";
+      col2.style.display = "inline-block";
+      mapDiv.parentNode.insertBefore(row, mapDiv);
+      document.getElementById("all").appendChild(col1);
+      document.getElementById("all").appendChild(col2);
+      col1.appendChild(mapDiv);
+      var Filters = {
+        "Year started": "int",
+        "Total patients served since initiation": "int",
+      };
+      function filterFunc() {
+        map.eachLayer(function (lyr) {
+          if ("options" in lyr && "dataVar" in lyr["options"]) {
+            features = this[lyr["options"]["dataVar"]].features.slice(0);
+            try {
+              for (key in Filters) {
+                keyS = key.replace(/[^a-zA-Z0-9_]/g, "");
+                if (Filters[key] == "str" || Filters[key] == "bool") {
+                  var selection = [];
+                  var options = document.getElementById("sel_" + keyS).options;
+                  for (var i = 0; i < options.length; i++) {
+                    if (options[i].selected) selection.push(options[i].value);
+                  }
+                  try {
+                    if (key in features[0].properties) {
+                      for (i = features.length - 1; i >= 0; --i) {
+                        if (
+                          selection.indexOf(features[i].properties[key]) < 0 &&
+                          selection.length > 0
+                        ) {
+                          features.splice(i, 1);
+                        }
+                      }
+                    }
+                  } catch (err) {}
+                }
+                if (Filters[key] == "int") {
+                  sliderVals = document
+                    .getElementById("div_" + keyS)
+                    .noUiSlider.get();
+                  try {
+                    if (key in features[0].properties) {
+                      for (i = features.length - 1; i >= 0; --i) {
+                        if (
+                          parseInt(features[i].properties[key]) <
+                            sliderVals[0] ||
+                          parseInt(features[i].properties[key]) > sliderVals[1]
+                        ) {
+                          features.splice(i, 1);
+                        }
+                      }
+                    }
+                  } catch (err) {}
+                }
+                if (Filters[key] == "real") {
+                  sliderVals = document
+                    .getElementById("div_" + keyS)
+                    .noUiSlider.get();
+                  try {
+                    if (key in features[0].properties) {
+                      for (i = features.length - 1; i >= 0; --i) {
+                        if (
+                          features[i].properties[key] < sliderVals[0] ||
+                          features[i].properties[key] > sliderVals[1]
+                        ) {
+                          features.splice(i, 1);
+                        }
+                      }
+                    }
+                  } catch (err) {}
+                }
+                if (
+                  Filters[key] == "date" ||
+                  Filters[key] == "datetime" ||
+                  Filters[key] == "time"
+                ) {
+                  try {
+                    if (key in features[0].properties) {
+                      HTMLkey = key.replace(/[&\/\\#,+()$~%.'":*?<>{} ]/g, "");
+                      startdate = document
+                        .getElementById("dat_" + HTMLkey + "_date1")
+                        .value.replace(" ", "T");
+                      enddate = document
+                        .getElementById("dat_" + HTMLkey + "_date2")
+                        .value.replace(" ", "T");
+                      for (i = features.length - 1; i >= 0; --i) {
+                        if (
+                          features[i].properties[key] < startdate ||
+                          features[i].properties[key] > enddate
+                        ) {
+                          features.splice(i, 1);
+                        }
+                      }
+                    }
+                  } catch (err) {}
+                }
+              }
+            } catch (err) {}
+            this[lyr["options"]["layerName"]].clearLayers();
+            this[lyr["options"]["layerName"]].addData(features);
+          }
+        });
+      }
+      /**************language section starts****************/
+      document
+        .getElementById("menu")
+        .appendChild(document.createElement("div"));
+      var div_lang_or_map_type = document.createElement("div");
+      div_lang_or_map_type.innerHTML =
+        '<span><select id="language"><option ' +
+        selected2 +
+        ' value="English">English</option><option ' +
+        selected1 +
+        ' value="Arabic">Arabic</option></select></span>  <span></span>';
+      div_lang_or_map_type.className = "lang_or_map_type_dynamic";
+      document.getElementById("menu").appendChild(div_lang_or_map_type);
+      /**************language section ends****************/
+      /*****************Year started slider starts**************************/
+      document
+        .getElementById("menu")
+        .appendChild(document.createElement("div"));
+      var div_Yearstarted = document.createElement("div");
+      div_Yearstarted.id = "div_Yearstarted";
+      div_Yearstarted.className = "slider";
+      document.getElementById("menu").appendChild(div_Yearstarted);
+      var lab_Yearstarted = document.createElement("div");
+      lab_Yearstarted.innerHTML =
+        year_started_translated +
+        ': <span><select id="val_Yearstarted" class="slider-input select2"></select></span>  <span><select id="val_Yearended" class="slider-input select2"></select></span>';
+      lab_Yearstarted.className = "filterlabel";
+      document.getElementById("menu").appendChild(lab_Yearstarted);
+      var reset_Yearstarted = document.createElement("div");
+      reset_Yearstarted.innerHTML = clear_filter_translated;
+      reset_Yearstarted.className = "filterlabel";
+      lab_Yearstarted.className = "filterlabel";
+      reset_Yearstarted.onclick = function () {
+        sel_Yearstarted.noUiSlider.reset();
+      };
+      document.getElementById("menu").appendChild(reset_Yearstarted);
+      var sel_Yearstarted = document.getElementById("div_Yearstarted");
+      noUiSlider.create(sel_Yearstarted, {
+        connect: true,
+        start: [1979, 2023],
+        step: 1,
+        format: wNumb({
+          decimals: 0,
+        }),
+        range: {
+          min: 1979,
+          max: 2023,
+        },
+      });
+
+      var inputNumberYearstarted = document.getElementById("val_Yearstarted");
+      // Append the option elements
+      for (var i = 1979; i <= 2023; i++) {
+        var option = document.createElement("option");
+        option.text = i;
+        option.value = i;
+
+        inputNumberYearstarted.appendChild(option);
+      }
+      var inputNumberYearended = document.getElementById("val_Yearended");
+      // Append the option elements
+      for (var i = 1979; i <= 2023; i++) {
+        var option = document.createElement("option");
+        option.text = i;
+        option.value = i;
+
+        inputNumberYearended.appendChild(option);
+      }
+
+      sel_Yearstarted.noUiSlider.on("update", function (values, handle) {
+        var value = values[handle];
+
+        if (handle) {
+          inputNumberYearended.value = value;
+        } else {
+          //select.value = Math.round(value);
+          inputNumberYearstarted.value = value;
+        }
+        filterFunc();
+      });
+
+      inputNumberYearstarted.addEventListener("change", function () {
+        sel_Yearstarted.noUiSlider.set([this.value, null]);
+      });
+
+      inputNumberYearended.addEventListener("change", function () {
+        sel_Yearstarted.noUiSlider.set([null, this.value]);
+      });
+      /*****************Year started slider ends**************************/
+      /*****************Patients served slider starts**************************/
+      document
+        .getElementById("menu")
+        .appendChild(document.createElement("div"));
+      var div_Totalpatientsservedsinceinitiation =
+        document.createElement("div");
+      div_Totalpatientsservedsinceinitiation.id =
+        "div_Totalpatientsservedsinceinitiation";
+      div_Totalpatientsservedsinceinitiation.className = "slider";
+      document
+        .getElementById("menu")
+        .appendChild(div_Totalpatientsservedsinceinitiation);
+      var lab_Totalpatientsservedsinceinitiation =
+        document.createElement("div");
+      lab_Totalpatientsservedsinceinitiation.innerHTML =
+        patients_served_translated +
+        ': <span><input id="val_Patientsserved" class="slider-input"></span>  <span><input id="val_Patientsserved2" class="slider-input"></span>';
+      lab_Totalpatientsservedsinceinitiation.className = "filterlabel";
+      document
+        .getElementById("menu")
+        .appendChild(lab_Totalpatientsservedsinceinitiation);
+      var reset_Totalpatientsservedsinceinitiation =
+        document.createElement("div");
+      reset_Totalpatientsservedsinceinitiation.innerHTML =
+        clear_filter_translated;
+      reset_Totalpatientsservedsinceinitiation.className = "filterlabel";
+      lab_Totalpatientsservedsinceinitiation.className = "filterlabel";
+      reset_Totalpatientsservedsinceinitiation.onclick = function () {
+        sel_Totalpatientsservedsinceinitiation.noUiSlider.reset();
+      };
+      document
+        .getElementById("menu")
+        .appendChild(reset_Totalpatientsservedsinceinitiation);
+      var sel_Totalpatientsservedsinceinitiation = document.getElementById(
+        "div_Totalpatientsservedsinceinitiation"
+      );
+      noUiSlider.create(sel_Totalpatientsservedsinceinitiation, {
+        connect: true,
+        start: [0, 60000],
+        step: 1,
+        format: wNumb({
+          decimals: 0,
+        }),
+        range: {
+          min: 0,
+          max: 60000,
+        },
+      });
+      var val_Patientsserved = document.getElementById("val_Patientsserved");
+
+      var val_Patientsserved2 = document.getElementById("val_Patientsserved2");
+      sel_Totalpatientsservedsinceinitiation.noUiSlider.on(
+        "update",
+        function (values, handle) {
+          var value = values[handle];
+
+          if (handle) {
+            val_Patientsserved2.value = value;
+          } else {
+            //select.value = Math.round(value);
+            val_Patientsserved.value = value;
+          }
+          filterFunc();
+        }
+      );
+      val_Patientsserved.addEventListener("keyup", function () {
+        sel_Totalpatientsservedsinceinitiation.noUiSlider.set([
+          this.value,
+          null,
+        ]);
+      });
+
+      val_Patientsserved2.addEventListener("keyup", function () {
+        sel_Totalpatientsservedsinceinitiation.noUiSlider.set([
+          null,
+          this.value,
+        ]);
+      });
+      /*****************Patients served slider ends**************************/
+      /***************legend section starts********************/
+
+      document
+        .getElementById("menu")
+        .appendChild(document.createElement("div"));
+      //var div_Legend_service_providers = document.createElement("div");
+      var div_Legend = document.createElement("div");
+      div_Legend.className = "legend_Dynamic";
+      var div_Legend1 = document.createElement("div");
+      div_Legend1.id = "legend_service_providers";
+      var div_Legend2 = document.createElement("div");
+      div_Legend2.id = "legend_no_of_service_providers";
+      document.getElementById("menu").appendChild(div_Legend1);
+      document.getElementById("menu").appendChild(div_Legend2);
+
+      /***************legend section ends********************/
+      var legend_no_of_service_providers = document.getElementById(
+        "legend_no_of_service_providers"
+      );
+      var legend_service_providers = document.getElementById(
+        "legend_service_providers"
+      );
+      //by default
+      if (map.hasLayer(layer_Numberofserviceproviderspercountry_1)) {
+        legend_no_of_service_providers.innerHTML =
+          '<p class="legend_title">' +
+          countries_categorized_translated +
+          '</p><p><table><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Otherregions0.png" /></td><td>' +
+          other_regions_translated +
+          '</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Nodata1.png" /></td><td>' +
+          no_data_translated +
+          '</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_1102.png" /></td><td>1 - 10</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_10193.png" /></td><td>10 - 19</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Greaterthan204.png" /></td><td>' +
+          greater_than_20_translated +
+          "</td></tr></table></p>";
+      } else {
+        legend_no_of_service_providers.innerHTML = "";
+      }
+      //by default
+      if (map.hasLayer(layer_Serviceproviders_2)) {
+        legend_service_providers.innerHTML =
+          '<p><img class="service_providers_icon" src="legend/ServiceProviders_4.svg" />' +
+          service_providers_translated +
+          "</p>";
+      } else {
+        legend_service_providers.innerHTML = "";
+      }
+
+      resetLabels([layer_Numberofserviceproviderspercountry_1]);
+      map.on("zoomend", function () {
+        resetLabels([layer_Numberofserviceproviderspercountry_1]);
+      });
+      map.on("layeradd", function () {
+        resetLabels([layer_Numberofserviceproviderspercountry_1]);
+
+        if (map.hasLayer(layer_Numberofserviceproviderspercountry_1)) {
+          legend_no_of_service_providers.innerHTML =
+            '<p class="legend_title">' +
+            countries_categorized_translated +
+            '</p><p><table><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Otherregions0.png" /></td><td>Other regions</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Nodata1.png" /></td><td>No data</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_1102.png" /></td><td>1 - 10</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_10193.png" /></td><td>10 - 19</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Greaterthan204.png" /></td><td>Greater than 20</td></tr></table></p>';
+        } else {
+          legend_no_of_service_providers.innerHTML = "";
+        }
+
+        if (map.hasLayer(layer_Serviceproviders_2)) {
+          legend_service_providers.innerHTML =
+            '<p><img class="service_providers_icon" src="legend/ServiceProviders_4.svg" />' +
+            service_providers_translated +
+            "</p>";
+        } else {
+          legend_service_providers.innerHTML = "";
+        }
+      });
+      map.on("layerremove", function () {
+        resetLabels([layer_Numberofserviceproviderspercountry_1]);
+
+        if (map.hasLayer(layer_Numberofserviceproviderspercountry_1)) {
+          legend_no_of_service_providers.innerHTML =
+            '<p class="legend_title">' +
+            countries_categorized_translated +
+            '</p><p><table><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Otherregions0.png" /></td><td>Other regions</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Nodata1.png" /></td><td>No data</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_1102.png" /></td><td>1 - 10</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_10193.png" /></td><td>10 - 19</td></tr><tr><td style="text-align: center;"><img src="legend/Numberofserviceproviderspercountry_1_Greaterthan204.png" /></td><td>Greater than 20</td></tr></table></p>';
+        } else {
+          legend_no_of_service_providers.innerHTML = "";
+        }
+        if (map.hasLayer(layer_Serviceproviders_2)) {
+          legend_service_providers.innerHTML =
+            '<p><img class="service_providers_icon" src="legend/ServiceProviders_4.svg" />' +
+            service_providers_translated +
+            "</p>";
+        } else {
+          legend_service_providers.innerHTML = "";
+        }
+        //legend_service_providers.innerHTML = "";
+      });
+      /**************jquery work starts*****************/
+      $(document).ready(function () {
+        //on changing the language
+        sessionStorage.removeItem("lang");
+        sessionStorage.clear();
+        $(document).on("change", "#language", function () {
+          var language = $(this).children(":selected").val();
+          sessionStorage.setItem("lang", language);
+          window.location.href = "index.html";
+        });
+        $(document).on("change", "#map_type", function () {
+          var map_type = $(this).children(":selected").val();
+          if (map_type == "General_Map") {
+            window.location.href = "index.html";
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
